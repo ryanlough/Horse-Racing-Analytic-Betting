@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using iTextSharp;
 using iTextSharp.text.pdf;
 using iTextSharp.text.pdf.parser;
+using System.Text.RegularExpressions;
 
 namespace ConsoleApplication2
 {
@@ -20,20 +21,44 @@ namespace ConsoleApplication2
   {
     private DateTime date;
     private Race[] races;
+
+    public Day(DateTime date)
+    {
+      this.date = date;
+    }
   }
   class Race
   {
     private int number;
+    private int purse;
     private Horse[] horses;
+
+    public Race(int number, int purse, Horse[] horses)
+    {
+      this.number = number;
+      this.purse = purse;
+      this.horses = horses;
+    }
   }
   class Horse
   {
     private String name;
     private int number;
-    private Position pos; 
+    private Position pos;
+    private double odds;
+
+    public Horse(String name, int number, Position pos, double odds)
+    {
+      this.name = name;
+      this.number = number;
+      this.pos = pos;
+      this.odds = odds;
+    }
   }
   class Program
   {
+    public static int currentRace = 0;
+    public static string[] sbArray = new string[10];
     static void Main(string[] args)
     {
       PdfReader reader = new PdfReader(@"c:\users\ryan\test.pdf");
@@ -50,9 +75,34 @@ namespace ConsoleApplication2
         processor.ProcessContent(ContentByteUtils.GetContentBytesForPage(reader, x), resourcesDic);
       }
 
-      Console.WriteLine(builder.ToString());
-      while (true) ;
+      foreach (string s in sbArray)
+      {
+        getHorses(s);
+        System.IO.File.WriteAllLines(@"c:\users\ryan\FOOOOOOOOOOOK.txt", s.Split(new Char[] {' '}));
+        break;
+        s.ToString().Split(new Char[] {' '});
+      }
     }
+
+    public static Horse[] getHorses(string s)
+    {
+
+
+      string pattern = @"\d\s(\S+\s)?(\S+\s)\((\S+,\s\S+)+\)";
+      Regex rgx = new Regex(pattern, RegexOptions.IgnoreCase);
+      MatchCollection matches = rgx.Matches(s.Substring(s.IndexOf("Last Raced")));
+      if (matches.Count > 0)
+      {
+        Console.WriteLine("({0} matches):\n", matches.Count);
+        foreach (Match match in matches)
+          Console.WriteLine("   " + match.Value);
+      }
+      //Console.WriteLine(s);
+      while (true) ;
+
+      return null;
+    }
+
 
     public class SBTextRenderer : IRenderListener
     {
@@ -66,7 +116,6 @@ namespace ConsoleApplication2
 
       public void BeginTextBlock()
       {
-        Console.WriteLine("\n\n\n\n\n\n\n\n\n");
       }
 
       public void EndTextBlock()
@@ -79,7 +128,13 @@ namespace ConsoleApplication2
 
       public void RenderText(TextRenderInfo renderInfo)
       {
-        _builder.Append(renderInfo.GetText());
+        _builder.Append(renderInfo.GetText() + " ");
+        if (renderInfo.GetText().Equals("Reserved."))
+        {
+          sbArray[currentRace] = _builder.ToString();
+          _builder.Clear();
+          currentRace++;
+        }
       }
 
       #endregion
