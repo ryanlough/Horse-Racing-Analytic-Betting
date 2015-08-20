@@ -29,30 +29,33 @@ namespace ConsoleApplication2
   }
   class Race
   {
-    private int number;
-    private int purse;
+    private int purse; //TODO need condition, weather, type
     private Horse[] horses;
 
     public Race(int number, int purse, Horse[] horses)
     {
-      this.number = number;
       this.purse = purse;
       this.horses = horses;
     }
   }
   class Horse
   {
-    private String name;
     private int number;
-    private Position pos;
+    private String name;
+    private String jockey;
     private double odds;
 
-    public Horse(String name, int number, Position pos, double odds)
+    public Horse(string number, String name, String jockey, string odds)
     {
+      this.number = Convert.ToInt32(number.Trim());
       this.name = name;
-      this.number = number;
-      this.pos = pos;
-      this.odds = odds;
+      this.jockey = jockey;
+      this.odds = Convert.ToDouble(odds.Trim());
+    }
+
+    public override string ToString()
+    {
+      return "Number: " + number + " Name: " + name + " Jockey: " + jockey + " Odds: " + odds;
     }
   }
   class Program
@@ -75,32 +78,30 @@ namespace ConsoleApplication2
         processor.ProcessContent(ContentByteUtils.GetContentBytesForPage(reader, x), resourcesDic);
       }
 
-      foreach (string s in sbArray)
-      {
-        getHorses(s);
-        System.IO.File.WriteAllLines(@"c:\users\ryan\FOOOOOOOOOOOK.txt", s.Split(new Char[] {' '}));
-        break;
-        s.ToString().Split(new Char[] {' '});
-      }
+      Array.ForEach<string>(sbArray, (s) => getHorses(s));
     }
 
     public static Horse[] getHorses(string s)
     {
-
-
-      string pattern = @"\d\s(\S+\s)?(\S+\s)\((\S+,\s\S+)+\)";
-      Regex rgx = new Regex(pattern, RegexOptions.IgnoreCase);
-      MatchCollection matches = rgx.Matches(s.Substring(s.IndexOf("Last Raced")));
+      string pattern = @"\s(?<num>\d)\s(?<name>(\D+\s)?(\S+\s))\((?<jockey>(\S+,\s\S+)+)\).+?(?<odds>\d+\.\d+)";
+      MatchCollection matches = Regex.Matches(s.Substring(s.IndexOf("Last Raced")), pattern, RegexOptions.ExplicitCapture);
       if (matches.Count > 0)
       {
-        Console.WriteLine("({0} matches):\n", matches.Count);
-        foreach (Match match in matches)
-          Console.WriteLine("   " + match.Value);
-      }
-      //Console.WriteLine(s);
-      while (true) ;
+        Horse[] h;
+        h = new Horse[matches.Count];
 
-      return null;
+        int i = 0;
+        foreach (Match match in matches)
+        {
+          h[i] = new Horse(match.Groups["num"].Value, match.Groups["name"].Value,
+                           match.Groups["jockey"].Value, match.Groups["odds"].Value);
+        }
+        return h;
+      }
+      else
+      {
+        throw new Exception("Something went wrong: there are no horses.");
+      }
     }
 
 
