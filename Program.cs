@@ -7,6 +7,7 @@ using iTextSharp;
 using iTextSharp.text.pdf;
 using iTextSharp.text.pdf.parser;
 using System.Text.RegularExpressions;
+using System.Globalization;
 
 namespace ConsoleApplication2
 {
@@ -78,13 +79,24 @@ namespace ConsoleApplication2
         processor.ProcessContent(ContentByteUtils.GetContentBytesForPage(reader, x), resourcesDic);
       }
 
-      Array.ForEach<string>(sbArray, (s) => getHorses(s));
+      Race[] r = new Race[10];
+      int i = 0;
+      Array.ForEach<string>(sbArray, (s) => r[i] = new Race(i, getPurse(s), getHorses(s)));
+    }
+
+    public static int getPurse(string s)
+    {
+      string pattern = @"\$\S+\s";
+      foreach (Match match in Regex.Matches(s.Substring(s.IndexOf("Purse:")), pattern, RegexOptions.ExplicitCapture))
+      {
+        return int.Parse(match.Value, NumberStyles.Currency);
+      }
+      return -1;
     }
 
     public static Horse[] getHorses(string s)
     {
-      string pattern = @"\s(?<num>\d)\s(?<name>(\D+\s)?(\S+\s))\((?<jockey>(\S+,\s\S+)+)\).+?(?<odds>\d+\.\d+)";
-      MatchCollection matches = Regex.Matches(s.Substring(s.IndexOf("Last Raced")), pattern, RegexOptions.ExplicitCapture);
+      MatchCollection matches = getHorseData(s);
       if (matches.Count > 0)
       {
         Horse[] h;
@@ -93,8 +105,8 @@ namespace ConsoleApplication2
         int i = 0;
         foreach (Match match in matches)
         {
-          h[i] = new Horse(match.Groups["num"].Value, match.Groups["name"].Value,
-                           match.Groups["jockey"].Value, match.Groups["odds"].Value);
+          h[i++] = new Horse(match.Groups["num"].Value, match.Groups["name"].Value,
+                             match.Groups["jockey"].Value, match.Groups["odds"].Value);
         }
         return h;
       }
@@ -104,6 +116,15 @@ namespace ConsoleApplication2
       }
     }
 
+    /**
+     * Finds all horse numbers, names, jockeys, and odds
+     * returns MatchCollection of above for each horse
+     */
+    public static MatchCollection getHorseData(string s)
+    {
+      string pattern = @"\s(?<num>\d)\s(?<name>(\D+\s)?(\S+\s))\((?<jockey>(\S+,\s\S+)+)\).+?(?<odds>\d+\.\d+)";
+      return Regex.Matches(s.Substring(s.IndexOf("Last Raced")), pattern, RegexOptions.ExplicitCapture);
+    }
 
     public class SBTextRenderer : IRenderListener
     {
