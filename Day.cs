@@ -17,5 +17,12 @@ namespace HorseRacing
       this.date = date;
       this.races = races;
     }
+
+    public override string ToString()
+    {
+      string result = "";
+      Array.ForEach<Race>(races, (h) => result += "\n\n\t" + ((h == null) ? "" : h.ToString()));
+      return "Date: " + date.ToShortDateString() + result;
+    }
   }
 }

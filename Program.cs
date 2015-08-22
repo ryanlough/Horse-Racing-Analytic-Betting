@@ -41,24 +41,18 @@ namespace HorseRacing
       int i = 0;
       
       foreach (String s in sbArray) {
-        //Abort if the race has too few characters. Workaround due to equibase putting a ton of copywrite statements...
+        //Abort if the race has too few characters.
+        //Workaround due to equibase putting a ton of redundant text in their pdfs for no reason...
         if (s == null || s.Length < 150) {
           break;
         }
-        races[i++] = new Race(i, Race.getPurse(s), Horse.getHorses(s));
+        races[i++] = new Race(i, Race.getPurse(s), Horse.getHorses(s), Race.getWeather(s), Race.getTrack(s), Race.getLength(s));
       }
 
-      foreach (Race r in races)
-      {
-        if (r == null)
-        {
-          //Break once we run out of races for the day. Possibly change to ArrayList in the future..
-          break;
-        }
-        Console.WriteLine(r.ToString());
-      }
+      Day d = new Day(t, races);
 
-      while (true) ;
+      Console.WriteLine(d.ToString());
+      Console.ReadLine();
     }
 
     public class SBTextRenderer : IRenderListener
