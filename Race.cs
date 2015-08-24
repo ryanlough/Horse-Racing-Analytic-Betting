@@ -40,11 +40,8 @@ namespace HorseRacing
     public static int getPurse(string s)
     {
       string pattern = @"\$\S+\s";
-      foreach (Match match in Regex.Matches(s.Substring(s.IndexOf("Purse:")), pattern, RegexOptions.ExplicitCapture))
-      {
-        return int.Parse(match.Value, NumberStyles.Currency);
-      }
-      return -1;
+      return int.Parse(Regex.Match(s.Substring(s.IndexOf("Purse:")), pattern,
+        RegexOptions.ExplicitCapture).Value, NumberStyles.Currency);
     }
     
     /**
@@ -53,11 +50,8 @@ namespace HorseRacing
     public static string getWeather(string s)
     {
       string pattern = @"(?<weather>\S+)\sTrack:";
-      foreach (Match match in Regex.Matches(s.Substring(s.IndexOf("Weather:")), pattern, RegexOptions.ExplicitCapture))
-      {
-        return match.Groups["weather"].Value.Trim();
-      }
-      return "";
+      return Regex.Match(s.Substring(s.IndexOf("Weather:")), pattern,
+        RegexOptions.ExplicitCapture).Groups["weather"].Value;
     }
 
     /**
@@ -67,13 +61,9 @@ namespace HorseRacing
     public static Track getTrack(string s)
     {
       string pattern = @"(?<track>\S+)\sTrack\sRecord:";
-      foreach (Match match in Regex.Matches(s, pattern, RegexOptions.ExplicitCapture))
-      {
-        Track track = Track.None;
-        Enum.TryParse(match.Groups["track"].Value.Trim().ToLower(), true, out track);
-        return track;
-      }
-      return Track.None;
+      Match match = Regex.Match(s, pattern, RegexOptions.ExplicitCapture);
+      Track track;
+      return Enum.TryParse(match.Groups["track"].Value.Trim().ToLower(), true, out track) ? track : Track.None;
     }
 
     /**
@@ -82,19 +72,17 @@ namespace HorseRacing
      */
     public static string getLength(string s)
     {
-      string pattern = @"(?<length>\S+(\sAnd\sOne\s\S+)?\s(Furlongs)?(Mile(s)?)?)\sOn\sThe\s(\S+\s)?\S+\sTrack\sRecord:";
-      foreach (Match match in Regex.Matches(s, pattern, RegexOptions.ExplicitCapture))
-      {
-        return match.Groups["length"].Value.Trim();
-      }
-      return "";
+      string pattern =
+        @"(?<length>\S+(\sAnd\sOne\s\S+)?\s(Furlongs)?(Mile(s)?)?)\sOn\sThe\s(\S+\s)?\S+\sTrack\sRecord:";
+      return Regex.Match(s, pattern, RegexOptions.ExplicitCapture).Groups["length"].Value.Trim();
     }
 
     public override string ToString()
     {
       string result = "";
       Array.ForEach<Horse>(horses, (h) => result += "\n\t" + h.ToString());
-      return "Race: " + number + " Purse: " + purse + " Weather: " + weather + " Track: " + track + " Length: " + length + result;
+      return "Race: " + number + " Purse: " + purse + " Weather: " + weather +
+             " Track: " + track + " Length: " + length + result;
     }
   }
 }
