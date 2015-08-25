@@ -31,8 +31,7 @@ namespace HorseRacing
     {
       string zeroMonth = date.Month < 10 ? "0" : "";
       string zeroDay = date.Day < 10 ? "0" : "";
-
-      return zeroMonth + date.Month + "/" + zeroDay + date.Day + "/" + date.Year;
+      return date.Year + "-" + zeroMonth + date.Month + "-" + zeroDay + date.Day;
     }
 
     public override string ToString()

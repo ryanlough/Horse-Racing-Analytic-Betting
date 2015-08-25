@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data.SQLite;
 using System.IO;
 using System.Linq;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -11,35 +12,43 @@ namespace HorseRacing
 {
   class DataAccessObject
   {
-    public void save(Day day)
+    /**
+     * Saves the given Day into the given SQLite DB
+     */
+    public void save(SQLiteConnection m_dbConnection, Day day)
     {
-      SQLiteConnection m_dbConnection = new SQLiteConnection("Data Source=Saratoga.sqlite;");
-      m_dbConnection.Open();
-
       using (MemoryStream stream = new MemoryStream())
       {
         Serializer.Serialize<Day>(stream, day);
+        string s64 = Convert.ToBase64String(stream.ToArray());
 
-
-        stream.Position = 0;
-        StreamReader sr = new StreamReader(stream);
-        string data = sr.ReadToEnd();
-
-        string sql = "INSERT INTO saratoga (day, data) values (TO_DATE('" + day.getSqlDate() +
-                     "', 'YYYYMMDD'), '" + data.Replace("'", "''") + "')";
+        string sql = "INSERT INTO saratoga (date, data) VALUES (@date, @data)";
         SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+        command.CommandType = System.Data.CommandType.Text;
+        command.Parameters.Add(new SQLiteParameter("@date", day.getSqlDate()));
+        command.Parameters.Add(new SQLiteParameter("@data", s64));
         command.ExecuteNonQuery();
       }
     }
-
-    public Day retrieve()
+    
+    /**
+     * Returns a list of all Days in the given DB
+     */
+    public List<Day> retrieve(SQLiteConnection m_dbConnection)
     {
-      using (var file = System.IO.File.OpenRead(@"C:\Users\Ryan\person.bin"))
+      List<Day> days = new List<Day>();
+      string sql = "SELECT * FROM saratoga ORDER BY date desc";
+      SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+      SQLiteDataReader reader = command.ExecuteReader();
+      
+      while (reader.Read())
       {
-        //Console.WriteLine(Serializer.Deserialize<Day>(stream));
+        using (MemoryStream stream = new MemoryStream(Convert.FromBase64String(reader["data"].ToString())))
+        {
+          days.Add(Serializer.Deserialize<Day>(stream));
+        }
       }
-
-      return null;
+      return days;
     }
   }
 }

@@ -52,10 +52,6 @@ namespace HorseRacing
       Thread thread = new Thread(new ThreadStart(handler.extractPdfData));
 
       thread.Start();
-      thread.Join();
-
-
-      while (true) ;
     }
 
     /**
@@ -131,16 +127,15 @@ namespace HorseRacing
 
         SQLiteConnection m_dbConnection = new SQLiteConnection("Data Source=Saratoga.sqlite;");
         m_dbConnection.Open();
-        string sql = "CREATE TABLE saratoga (day DATE, data TEXT)";
+        string sql = "CREATE TABLE saratoga (date TEXT, data TEXT)";
         SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
         command.ExecuteNonQuery();
 
         DataAccessObject dao = new DataAccessObject();
-        dao.save(d);
+        dao.save(m_dbConnection, d);
 
-        
-
-        //Console.WriteLine(new Day(date, races).ToString());
+        Console.WriteLine("Finished saving: " + d.getSqlDate());
+        m_dbConnection.Dispose();
       }
     }
   }
