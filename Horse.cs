@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+using ProtoBuf;
 
 namespace HorseRacing
 {
@@ -15,27 +15,40 @@ namespace HorseRacing
     Show,
     Fourth
   }
+  [ProtoContract]
   class Horse
   {
-    private int number;
-    private Position position;
-    private string name;
-    private string jockey;
-    private double odds;
-    private string trainer;
-    private string owner;
+    [ProtoMember(1)]
+    private byte number { get; set; }
+    [ProtoMember(2)]
+    private Position position { get; set; }
+    [ProtoMember(3)]
+    private string name { get; set; }
+    [ProtoMember(4)]
+    private string jockey { get; set; }
+    [ProtoMember(5)]
+    private double odds { get; set; }
+    [ProtoMember(6)]
+    private string trainer { get; set; }
+    [ProtoMember(7)]
+    private string owner { get; set; }
 
     //Private constructor for Horse
     private Horse(string number, Position position, string name,
                   string jockey, string odds, string trainer, string owner)
     {
-      this.number = Convert.ToInt32(number.Trim());
+      this.number = Convert.ToByte(number.Trim());
       this.position = position;
       this.name = name;
       this.jockey = jockey;
       this.odds = Convert.ToDouble(odds.Trim());
       this.trainer = trainer.Trim();
       this.owner = owner.Trim();
+    }
+
+    public Horse()
+    {
+
     }
 
     /**
@@ -67,7 +80,8 @@ namespace HorseRacing
           }
           horses[i++] = new Horse(match.Groups["num"].Value, pos, match.Groups["name"].Value,
                              match.Groups["jockey"].Value, match.Groups["odds"].Value, 
-                             getTrainer(page, match.Groups["num"].Value), getOwner(page, match.Groups["num"].Value));
+                             getTrainer(page, match.Groups["num"].Value),
+                             getOwner(page, match.Groups["num"].Value));
         }
         return horses;
       }
@@ -105,7 +119,7 @@ namespace HorseRacing
       string pattern = @"\s?" + number.Trim() + @"\w?\s?-\s?(?<owner>\D+)\d";
       //Hack to fix retrival last owner: Replace Footnotes with 0
       return Regex.Match(s.Substring(s.IndexOf("Owners:")).Replace("Footnotes", "0"), pattern,
-        RegexOptions.ExplicitCapture).Groups["owner"].Value;
+        RegexOptions.ExplicitCapture).Groups["owner"].Value.Replace(';', ' ');
     }
 
     public override string ToString()

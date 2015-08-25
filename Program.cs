@@ -7,6 +7,9 @@ using iTextSharp;
 using iTextSharp.text.pdf;
 using iTextSharp.text.pdf.parser;
 using System.Threading;
+using System.Data.SQLite;
+using ProtoBuf;
+using System.IO;
 
 
 namespace HorseRacing
@@ -20,6 +23,10 @@ namespace HorseRacing
     public static string[] sbArray = new string[11];
     static void Main(string[] args)
     {
+      SQLiteConnection.CreateFile("Saratoga.sqlite");
+      SQLiteConnection m_dbConnection = new SQLiteConnection("Data Source=Saratoga.sqlite;Version=3;");
+      m_dbConnection.Open();
+
       DateTime dateTime = new DateTime(2005, 8, 13);
 
       string zeroMonth = dateTime.Month < 10 ? "0" : "";
@@ -46,6 +53,8 @@ namespace HorseRacing
 
       thread.Start();
       thread.Join();
+
+
       while (true) ;
     }
 
@@ -105,8 +114,8 @@ namespace HorseRacing
       public void extractPdfData()
       {
         Race[] races = new Race[11];
-        int i = 0;
 
+        byte b = 0;
         foreach (String s in sbArray)
         {
           //Abort if the race has too few characters.
@@ -115,10 +124,23 @@ namespace HorseRacing
           {
             break;
           }
-          races[i++] = new Race(i, Race.getPurse(s), Horse.getHorses(s), Race.getWeather(s), Race.getTrack(s), Race.getLength(s));
+          races[b++] = new Race(b, Race.getPurse(s), Horse.getHorses(s), Race.getWeather(s), Race.getTrack(s), Race.getLength(s));
         }
 
-        Console.WriteLine(new Day(date, races).ToString());
+        Day d = new Day(date, races);
+
+        SQLiteConnection m_dbConnection = new SQLiteConnection("Data Source=Saratoga.sqlite;");
+        m_dbConnection.Open();
+        string sql = "CREATE TABLE saratoga (day DATE, data TEXT)";
+        SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+        command.ExecuteNonQuery();
+
+        DataAccessObject dao = new DataAccessObject();
+        dao.save(d);
+
+        
+
+        //Console.WriteLine(new Day(date, races).ToString());
       }
     }
   }

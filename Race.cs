@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using System.Globalization;
+using ProtoBuf;
 
 namespace HorseRacing
 {
@@ -14,17 +14,24 @@ namespace HorseRacing
     Dirt,
     Turf
   }
+  [ProtoContract]
   class Race
   {
-    private int number;
-    private int purse;
-    private Horse[] horses;
-    private string weather;
-    private Track track;
-    private string length;
+    [ProtoMember(1)]
+    private byte number { get; set; }
+    [ProtoMember(2)]
+    private int purse { get; set; }
+    [ProtoMember(3)]
+    private Horse[] horses { get; set; }
+    [ProtoMember(4)]
+    private string weather { get; set; }
+    [ProtoMember(5)]
+    private Track track { get; set; }
+    [ProtoMember(6)]
+    private string length { get; set; }
 
     //Constructor for Race
-    public Race(int number, int purse, Horse[] horses, string weather, Track track, string length)
+    public Race(byte number, int purse, Horse[] horses, string weather, Track track, string length)
     {
       this.number = number;
       this.purse = purse;
@@ -32,6 +39,11 @@ namespace HorseRacing
       this.weather = weather;
       this.track = track;
       this.length = length;
+    }
+
+    public Race()
+    {
+
     }
 
     /**
