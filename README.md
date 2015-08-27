@@ -25,4 +25,4 @@ Depending on the quality of the trends found in the previous part of this projec
 
 1. Being 95% sure that a website doesn't have a CAPTCHA is not good enough.
 2. Backup your data. All your data.
-3. Dispose of your variables when you're done with them.
+3. Bad things can happen if you don't dispose of your variables when you're done with them.
