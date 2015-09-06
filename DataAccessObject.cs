@@ -51,5 +51,25 @@ namespace HorseRacing
       }
       return days;
     }
+
+    /**
+     * Prints all string representations of days in SQLite database.
+     */
+    public static void printAll()
+    {
+      SQLiteConnection m_dbConnection = new SQLiteConnection("Data Source=Saratoga.sqlite;Version=3;");
+      m_dbConnection.Open();
+
+      string s = "";
+      List<Day> dayList = DataAccessObject.retrieve(m_dbConnection);
+      List<string> stringList = new List<string>();
+
+      foreach (Day day in dayList)
+      {
+        stringList.Add(day.ToString());
+      }
+
+      File.WriteAllLines(@"C:\Users\Ryan\AllHorsesInTable.txt", stringList);
+    }
   }
 }

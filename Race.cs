@@ -50,7 +50,7 @@ namespace HorseRacing
     /**
      * Gets the purse amount for the given race
      */
-    public static int getPurse(string s)
+    public static int extractPurse(string s)
     {
       string pattern = @"\$\S+\s";
       return int.Parse(Regex.Match(s.Substring(s.IndexOf("Purse:")), pattern,
@@ -60,7 +60,7 @@ namespace HorseRacing
     /**
      * Gets the weather conditions for the given race
      */
-    public static string getWeather(string s)
+    public static string extractWeather(string s)
     {
       string pattern = @"(?<weather>\S+)\sTrack:";
       return Regex.Match(s.Substring(s.IndexOf("Weather:")), pattern,
@@ -71,7 +71,7 @@ namespace HorseRacing
      * Gets what type of track was used
      * @Return: Track Enum
      */
-    public static Track getTrack(string s)
+    public static Track extractTrack(string s)
     {
       string pattern = @"(?<track>\S+)\sTrack\sRecord:";
       Match match = Regex.Match(s, pattern, RegexOptions.ExplicitCapture);
@@ -83,11 +83,68 @@ namespace HorseRacing
      * Gets the distance run in the given race.
      * @Return: string distance (TODO: Look into better ways to represent this data)
      */
-    public static string getLength(string s)
+    public static string extractLength(string s)
     {
       string pattern =
         @"(?<length>\S+(\sAnd\sOne\s\S+)?\s(Furlongs)?(Mile(s)?)?)\sOn\sThe\s(\S+\s)?\S+\sTrack\sRecord:";
       return Regex.Match(s, pattern, RegexOptions.ExplicitCapture).Groups["length"].Value.Trim();
+    }
+
+    /**
+     * Sets how all horses rank compared to each other via their odds (0 = best odds, 10 = worst, etc)
+     */
+    public void setAllOddRanks()
+    {
+      Horse[] temp = (Horse[])horses.Clone();
+      Array.Sort(temp, Comparer<Horse>.Create((x, y) => (x.getOdds()< y.getOdds()) ? -1 : ((x.getOdds() > y.getOdds()) ? 1 : 0)));
+      for (byte i = 0; i < temp.Length; i++)
+      {
+        horses[Array.IndexOf(horses, temp[i])].setOddRank(i);
+      }
+    }
+
+    /**
+     * Returns the winning horse
+     */
+    public Horse getWin()
+    {
+      return positionHelper(Position.Win);
+    }
+
+    /**
+     * Returns the placing horse
+     */
+    public Horse getPlace()
+    {
+      return positionHelper(Position.Place);
+    }
+
+    /**
+     * Returns the show horse
+     */
+    public Horse getShow()
+    {
+      return positionHelper(Position.Show);
+    }
+
+    /**
+     * Returns the fourth horse
+     */
+    public Horse getFourth()
+    {
+      return positionHelper(Position.Fourth);
+    }
+
+    private Horse positionHelper(Position pos)
+    {
+      foreach (Horse horse in horses)
+      {
+        if (horse.getPosition() == pos)
+        {
+          return horse;
+        }
+      }
+      return new Horse();
     }
 
     public override string ToString()

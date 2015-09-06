@@ -22,14 +22,14 @@ namespace HorseRacing
     public static List<string> pages = new List<string>();
 
     static void Main(string[] args)
-    {
-      SQLiteConnection.CreateFile("Saratoga.sqlite");
+    {/*
+      //SQLiteConnection.CreateFile("Saratoga.sqlite");
       SQLiteConnection m_dbConnection = new SQLiteConnection("Data Source=Saratoga.sqlite;Version=3;");
       m_dbConnection.Open();
 
-      string sql = "CREATE TABLE saratoga (date TEXT, data TEXT)";
-      SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
-      command.ExecuteNonQuery();
+      //string sql = "CREATE TABLE saratoga (date TEXT, data TEXT)";
+      //SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+      //command.ExecuteNonQuery();
 
       DateTime startDate = new DateTime(2000, 7, 25);
       DateTime endDate = new DateTime(2015, 9, 15);
@@ -44,32 +44,8 @@ namespace HorseRacing
           startDate = new DateTime(startDate.Year + 1, 7, 25);
         }
       }
-
+      */
       Console.WriteLine("PROCESS COMPLETE!");
-    }
-
-    /**
-     * Prints all string representations of days in SQLite database.
-     */
-    public static void printAll()
-    {
-      SQLiteConnection m_dbConnection = new SQLiteConnection("Data Source=Saratoga.sqlite;Version=3;");
-      m_dbConnection.Open();
-
-      string s = "";
-      List<Day> dayList = DataAccessObject.retrieve(m_dbConnection);
-      List<string> stringList = new List<string>();
-
-      foreach (Day day in dayList) {
-        stringList.Add(day.ToString());
-      }
-
-      File.WriteAllLines(@"C:\Users\Ryan\AllHorsesInTable.txt", stringList);
-      Console.ReadKey();
-      foreach(Day d in dayList) {
-
-      }
-      Console.WriteLine(s);
     }
 
     /**
@@ -199,7 +175,8 @@ namespace HorseRacing
           {
             break;
           }
-          races.Add(new Race(++b, Race.getPurse(s), Horse.getHorses(s), Race.getWeather(s), Race.getTrack(s), Race.getLength(s)));
+          races.Add(new Race(++b, Race.extractPurse(s), Horse.extractHorses(s),
+                        Race.extractWeather(s), Race.extractTrack(s), Race.extractLength(s)));
         }
         b = 0;
 

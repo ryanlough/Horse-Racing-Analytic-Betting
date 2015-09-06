@@ -37,6 +37,27 @@ namespace HorseRacing
       return date.Year + "-" + zeroMonth + date.Month + "-" + zeroDay + date.Day;
     }
 
+    /**
+     * Returns the list of races.
+     */
+    public List<Race> getRaces()
+    {
+      return races;
+    }
+
+    /**
+     * Sets how all horses rank compared to each other via their odds (0 = best odds, 10 = worst, etc)
+     */
+    public void setAllHorseRanks()
+    {
+      if (races != null)
+      foreach(Race race in races) {
+        if(race != null) {
+          race.setAllOddRanks();
+        }
+      }
+    }
+
     public override string ToString()
     {
       string result = "";

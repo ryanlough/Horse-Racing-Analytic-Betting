@@ -33,6 +33,8 @@ namespace HorseRacing
     [ProtoMember(7)]
     private string owner { get; set; }
 
+    private byte oddRank;
+
     //Private constructor for Horse
     private Horse(string number, Position position, string name,
                   string jockey, string odds, string trainer, string owner)
@@ -55,9 +57,9 @@ namespace HorseRacing
     /**
      * Public method to retrieve an array of all horses found on the given page.
      */
-    public static Horse[] getHorses(string page)
+    public static Horse[] extractHorses(string page)
     {
-      MatchCollection matches = getHorseData(page);
+      MatchCollection matches = extractHorseData(page);
       if (matches.Count > 0)
       {
         Horse[] horses;
@@ -81,8 +83,8 @@ namespace HorseRacing
           }
           horses[i++] = new Horse(match.Groups["num"].Value, pos, match.Groups["name"].Value,
                              match.Groups["jockey"].Value, match.Groups["odds"].Value, 
-                             getTrainer(page, match.Groups["num"].Value),
-                             getOwner(page, match.Groups["num"].Value));
+                             extractTrainer(page, match.Groups["num"].Value),
+                             extractOwner(page, match.Groups["num"].Value));
         }
         return horses;
       }
@@ -99,7 +101,7 @@ namespace HorseRacing
      * Finds all horse numbers, names, jockeys, and odds
      * returns MatchCollection of above for each horse
      */
-    private static MatchCollection getHorseData(string s)
+    private static MatchCollection extractHorseData(string s)
     {
       string pattern = @"\s(?<num>\d+)\w?\s(?<name>(\D+\s)?(\S+\s))\((?<jockey>(\S+,\s\S+)+)\).+?(?<odds>\d+\.\d+)";
       return Regex.Matches(s.Substring(s.IndexOf("Last Raced")), pattern, RegexOptions.ExplicitCapture);
@@ -108,7 +110,7 @@ namespace HorseRacing
     /**
      * Returns the trainer for the given number horse.
      */
-    private static string getTrainer(string s, string number)
+    private static string extractTrainer(string s, string number)
     {
       string pattern = @"\s" + number.Trim() + @"\w?\s-\s(?<trainer>(\S+,(\s\S+,)?\s\S+)+)\s";
       return Regex.Match(s.Substring(s.IndexOf("Trainers:")), pattern,
@@ -118,12 +120,44 @@ namespace HorseRacing
     /**
      * Returns the owner(s) for the given number horse.
      */
-    private static string getOwner(string s, string number)
+    private static string extractOwner(string s, string number)
     {
       string pattern = @"\s?" + number.Trim() + @"\w?\s?-\s?(?<owner>\D+)\d";
       //Hack to fix retrival last owner: Replace Footnotes with 0
       return Regex.Match(s.Substring(s.IndexOf("Owners:")).Replace("Footnotes", "0"), pattern,
         RegexOptions.ExplicitCapture).Groups["owner"].Value.Replace(';', ' ');
+    }
+
+    /**
+     * Returns the odds for this horse.
+     */
+    public double getOdds()
+    {
+      return odds;
+    }
+
+    /**
+     * Sets what odds posn the horse is in conjunction to the other horses (lower is better odds)
+     */
+    public void setOddRank(byte oddRank)
+    {
+      this.oddRank = oddRank;
+    }
+
+    /**
+     * Gets what odds posn the horse is in conjunction to the other horses (lower is better odds)
+     */
+    public byte getOddRank()
+    {
+      return oddRank;
+    }
+
+    /**
+     * Returns the horses final posn
+     */
+    public Position getPosition()
+    {
+      return position;
     }
 
     public override string ToString()
