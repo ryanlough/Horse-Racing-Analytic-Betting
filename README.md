@@ -18,7 +18,7 @@ With C# and the SQLite database created in the previous part of this project, I 
 2. What type of bet has the best monetary return? (Win, Place, Show, Exacta, Trifecta, Superfecta) What combination of horses is the best for each type of bet?
 3. Do certain owners, trainers, jockeys, horses work best together?
 
-###Create an automated betting system. - TODO
+###Create an automated betting system - TODO
 Depending on the quality of the trends found in the previous part of this project, set up an automatic betting system to bet in an intelligent manner year-round. If this is a success, move to different tracks.
 
 ####Lessons learned so far:
