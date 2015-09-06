@@ -41,6 +41,7 @@ namespace HorseRacing
       this.length = length;
     }
 
+    //Needed to allow protobuf default model binder to desereialize
     public Race()
     {
 
@@ -92,7 +93,14 @@ namespace HorseRacing
     public override string ToString()
     {
       string result = "";
-      Array.ForEach<Horse>(horses, (h) => result += "\n\t" + h.ToString());
+      try
+      {
+        Array.ForEach<Horse>(horses, (h) => result += "\n\t" + h.ToString());
+      }
+      catch (Exception e)
+      {
+
+      }
       return "Race: " + number + " Purse: " + purse + " Weather: " + weather +
              " Track: " + track + " Length: " + length + result;
     }

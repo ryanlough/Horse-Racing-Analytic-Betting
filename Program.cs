@@ -19,23 +19,85 @@ namespace HorseRacing
    */
   class Program
   {
-    public static int currentRace = 0;
-    public static string[] sbArray = new string[11];
+    public static List<string> pages = new List<string>();
+
     static void Main(string[] args)
     {
       SQLiteConnection.CreateFile("Saratoga.sqlite");
       SQLiteConnection m_dbConnection = new SQLiteConnection("Data Source=Saratoga.sqlite;Version=3;");
       m_dbConnection.Open();
 
-      DateTime dateTime = new DateTime(2005, 8, 13);
+      string sql = "CREATE TABLE saratoga (date TEXT, data TEXT)";
+      SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+      command.ExecuteNonQuery();
 
+      DateTime startDate = new DateTime(2000, 7, 25);
+      DateTime endDate = new DateTime(2015, 9, 15);
+      while (startDate.CompareTo(endDate) != 0)
+      {
+        Console.WriteLine("Trying: " + startDate.ToShortDateString());
+        collectDataforDay(startDate, m_dbConnection);
+        Thread.Sleep(2100);
+        startDate = startDate.AddDays(1);
+        if (startDate.Month > 8 && startDate.Day > 10)
+        {
+          startDate = new DateTime(startDate.Year + 1, 7, 25);
+        }
+      }
+
+      Console.WriteLine("PROCESS COMPLETE!");
+    }
+
+    /**
+     * Prints all string representations of days in SQLite database.
+     */
+    public static void printAll()
+    {
+      SQLiteConnection m_dbConnection = new SQLiteConnection("Data Source=Saratoga.sqlite;Version=3;");
+      m_dbConnection.Open();
+
+      string s = "";
+      List<Day> dayList = DataAccessObject.retrieve(m_dbConnection);
+      List<string> stringList = new List<string>();
+
+      foreach (Day day in dayList) {
+        stringList.Add(day.ToString());
+      }
+
+      File.WriteAllLines(@"C:\Users\Ryan\AllHorsesInTable.txt", stringList);
+      Console.ReadKey();
+      foreach(Day d in dayList) {
+
+      }
+      Console.WriteLine(s);
+    }
+
+    /**
+     * Put all data from given day into given table
+     */
+    public static void collectDataforDay(DateTime dateTime, SQLiteConnection m_dbConnection)
+    {
       string zeroMonth = dateTime.Month < 10 ? "0" : "";
-      string zeroDay   = dateTime.Day < 10 ? "0" : "";
-
+      string zeroDay = dateTime.Day < 10 ? "0" : "";
       string date = zeroMonth + dateTime.Month + "/" + zeroDay + dateTime.Day + "/" + dateTime.Year;
-      
-      //PdfReader reader = new PdfReader(@"http://www.equibase.com/premium/eqbPDFChartPlus.cfm?RACE=A&BorP=P&TID=SAR&CTRY=USA&DT=" + date + "&DAY=D&STYLE=EQB");
-      PdfReader reader = new PdfReader(@"C:\Users\Ryan\test.pdf");
+
+      PdfReader reader;
+      try
+      {
+        reader = new PdfReader(@"http://web.archive.org/web/20150827194015/" +
+                                "http://www.equibase.com/premium/eqbPDFChartPlus.cfm?RACE=A&BorP=P&TID=SAR&CTRY=USA&DT=" +
+                                 date + "&DAY=D&STYLE=EQB");
+      }
+      catch (Exception e)
+      {
+        //Gross hack to get around captcha on equibase. This was more useful before I realized all the pdfs were cached..
+        Console.WriteLine("CAPSHA TIME!!");
+        Console.Beep();
+        Console.ReadKey();
+        reader = new PdfReader(@"http://web.archive.org/web/20150827194015/" +
+                                "http://www.equibase.com/premium/eqbPDFChartPlus.cfm?RACE=A&BorP=P&TID=SAR&CTRY=USA&DT=" +
+                                date + "&DAY=D&STYLE=EQB");
+      }
       StringBuilder builder = new StringBuilder();
 
       for (int x = 1; x <= reader.NumberOfPages; x++)
@@ -48,10 +110,22 @@ namespace HorseRacing
         processor.ProcessContent(ContentByteUtils.GetContentBytesForPage(reader, x), resourcesDic);
       }
 
-      DataHandler handler = new DataHandler(dateTime, sbArray);
-      Thread thread = new Thread(new ThreadStart(handler.extractPdfData));
+      if (pages.Count != 0)
+      {
 
-      thread.Start();
+        DataHandler handler = new DataHandler(dateTime, pages, m_dbConnection);
+        Thread thread = new Thread(new ThreadStart(handler.extractPdfData));
+
+        thread.Start();
+        thread.Join();
+        reader.Dispose();
+        pages.Clear();
+      }
+      else
+      {
+        // If there were no races on this particular day, simply skip it! :D
+        Console.WriteLine("Invalid Date: " + date);
+      }
     }
 
     /**
@@ -82,11 +156,11 @@ namespace HorseRacing
       public void RenderText(TextRenderInfo renderInfo)
       {
         _builder.Append(renderInfo.GetText() + " ");
+        // New page detected at copywrite statement.
         if (renderInfo.GetText().Equals("Reserved."))
         {
-          sbArray[currentRace] = _builder.ToString();
+          pages.Add(_builder.ToString());
           _builder.Clear();
-          currentRace++;
         }
       }
 
@@ -99,20 +173,25 @@ namespace HorseRacing
     public class DataHandler
     {
       private DateTime date;
-      private string[] pages;
+      private List<string> pages;
+      private SQLiteConnection m_dbConnection;
 
-      public DataHandler(DateTime date, string[] pages)
+      public DataHandler(DateTime date, List<string> pages, SQLiteConnection m_dbConnection)
       {
         this.date = date;
         this.pages = pages;
+        this.m_dbConnection = m_dbConnection;
       }
 
+      /**
+       * Extract the current day's race data from the pdf
+       */
       public void extractPdfData()
       {
-        Race[] races = new Race[11];
+        List<Race> races = new List<Race>();
 
         byte b = 0;
-        foreach (String s in sbArray)
+        foreach (String s in pages)
         {
           //Abort if the race has too few characters.
           //Workaround due to equibase putting a ton of redundant text in their pdfs for no reason...
@@ -120,22 +199,19 @@ namespace HorseRacing
           {
             break;
           }
-          races[b++] = new Race(b, Race.getPurse(s), Horse.getHorses(s), Race.getWeather(s), Race.getTrack(s), Race.getLength(s));
+          races.Add(new Race(++b, Race.getPurse(s), Horse.getHorses(s), Race.getWeather(s), Race.getTrack(s), Race.getLength(s)));
         }
+        b = 0;
 
+        saveToDatabase(races, m_dbConnection);
+      }
+
+      public void saveToDatabase(List<Race> races, SQLiteConnection m_dbConnection)
+      {
         Day d = new Day(date, races);
 
-        SQLiteConnection m_dbConnection = new SQLiteConnection("Data Source=Saratoga.sqlite;");
-        m_dbConnection.Open();
-        string sql = "CREATE TABLE saratoga (date TEXT, data TEXT)";
-        SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
-        command.ExecuteNonQuery();
-
-        DataAccessObject dao = new DataAccessObject();
-        dao.save(m_dbConnection, d);
-
+        DataAccessObject.save(m_dbConnection, d, true);
         Console.WriteLine("Finished saving: " + d.getSqlDate());
-        m_dbConnection.Dispose();
       }
     }
   }

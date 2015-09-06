@@ -46,6 +46,7 @@ namespace HorseRacing
       this.owner = owner.Trim();
     }
 
+    //Needed to allow protobuf default model binder to desereialize
     public Horse()
     {
 
@@ -87,7 +88,10 @@ namespace HorseRacing
       }
       else
       {
-        throw new Exception("Something went wrong: there are no horses.");
+        Console.WriteLine("Something went wrong: there are no horses.");
+        Console.Beep();
+        Console.ReadKey();
+        return null;
       }
     }
 

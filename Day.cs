@@ -12,10 +12,10 @@ namespace HorseRacing
     [ProtoMember(1)]
     private DateTime date { get; set; }
     [ProtoMember(2)]
-    private Race[] races { get; set; }
+    private List<Race> races { get; set; }
 
     //Constructor for Day
-    public Day(DateTime date, Race[] races)
+    public Day(DateTime date, List<Race> races)
     {
       this.date = date;
       this.races = races;
@@ -27,6 +27,9 @@ namespace HorseRacing
 
     }
 
+    /**
+     * Returns the SQLite compatible string representation of the DateTime.
+     */
     public string getSqlDate()
     {
       string zeroMonth = date.Month < 10 ? "0" : "";
@@ -37,7 +40,11 @@ namespace HorseRacing
     public override string ToString()
     {
       string result = "";
-      Array.ForEach<Race>(races, (h) => result += "\n\n\t" + ((h == null) ? "" : h.ToString()));
+      if (races == null) { Console.WriteLine("UHOHHHHH" + date); }
+      else
+      {
+        races.ForEach((h) => result += "\n\n\t" + ((h == null) ? "" : h.ToString()));
+      }
       return "Date: " + date.ToShortDateString() + result;
     }
   }

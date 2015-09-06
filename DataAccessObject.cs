@@ -15,14 +15,15 @@ namespace HorseRacing
     /**
      * Saves the given Day into the given SQLite DB
      */
-    public void save(SQLiteConnection m_dbConnection, Day day)
+    public static void save(SQLiteConnection m_dbConnection, Day day, bool isNew)
     {
       using (MemoryStream stream = new MemoryStream())
       {
         Serializer.Serialize<Day>(stream, day);
         string s64 = Convert.ToBase64String(stream.ToArray());
 
-        string sql = "INSERT INTO saratoga (date, data) VALUES (@date, @data)";
+        string sql = isNew ? "INSERT INTO saratoga (date, data) VALUES (@date, @data)" :
+                             "UPDATE saratoga SET data=@data WHERE date=@date";
         SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
         command.CommandType = System.Data.CommandType.Text;
         command.Parameters.Add(new SQLiteParameter("@date", day.getSqlDate()));
@@ -34,7 +35,7 @@ namespace HorseRacing
     /**
      * Returns a list of all Days in the given DB
      */
-    public List<Day> retrieve(SQLiteConnection m_dbConnection)
+    public static List<Day> retrieve(SQLiteConnection m_dbConnection)
     {
       List<Day> days = new List<Day>();
       string sql = "SELECT * FROM saratoga ORDER BY date desc";
