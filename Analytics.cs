@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Linq;
@@ -17,6 +18,14 @@ namespace HorseRacing
       m_dbConnection.Open();
 
       List<Day> days = DataAccessObject.retrieve(m_dbConnection);
+
+
+      foreach (Day day in days)
+      {
+        if (day != null)
+          day.setAllHorseRanks();
+      }
+
       findBestBet(days);
     }
 
@@ -31,15 +40,15 @@ namespace HorseRacing
       Console.WriteLine("\nHorses to fourth:");
       retrieveListForPosn(days, getFourth);
 
+      Console.WriteLine("\nExacta:");
+      bestExacta(days);
+
       Console.ReadKey();
     }
 
     public static void retrieveListForPosn(List<Day> days, Integrand f) {
       Dictionary<byte, int> result = new Dictionary<byte, int>();
-      foreach(Day day in days) {
-        if(day != null)
-        day.setAllHorseRanks();
-      }
+      
 
       foreach (Day day in days)
       {
@@ -65,6 +74,39 @@ namespace HorseRacing
       }
     }
 
+    public static void bestExacta(List<Day> days)
+    {
+      Dictionary<byte[], int> result = new Dictionary<byte[], int>(new ByteArrayComparer());
+      foreach (Day day in days)
+      {
+        if (day != null && day.getRaces() != null)
+        {
+          foreach (Race race in day.getRaces())
+          {
+            byte[] winners = exactaHelper(race);
+            if (!result.ContainsKey(winners))
+            {
+              result.Add(winners, 0);
+            }
+            else
+            {
+              result[winners] += 1;
+            }
+          }
+        }
+      }
+
+      foreach (KeyValuePair<byte[], int> kvp in from entry in result orderby entry.Value descending select entry)
+      {
+        Console.WriteLine("Key = {0},{1}, Value = {2}", kvp.Key[0], kvp.Key[1], kvp.Value); Console.ReadKey();
+      }
+    }
+
+    private static byte[] exactaHelper(Race race)
+    {
+      return new byte[] { getWin(race).getOddRank(), getPlace(race).getOddRank() };
+    }
+
     private static Horse getWin(Race r)
     {
       return r.getWin();
@@ -83,6 +125,26 @@ namespace HorseRacing
     private static Horse getFourth(Race r)
     {
       return r.getFourth();
+    }
+
+    private class ByteArrayComparer : IEqualityComparer<byte[]>
+    {
+      public int GetHashCode(byte[] obj)
+      {
+        byte[] arr = obj as byte[];
+        int hash = 0;
+        foreach (byte b in arr) hash ^= b;
+        return hash;
+      }
+      public new bool Equals(byte[] x, byte[] y)
+      {
+        byte[] arr1 = x as byte[];
+        byte[] arr2 = y as byte[];
+        if (arr1.Length != arr2.Length) return false;
+        for (int ix = 0; ix < arr1.Length; ++ix)
+          if (arr1[ix] != arr2[ix]) return false;
+        return true;
+      }
     }
   }
 }
