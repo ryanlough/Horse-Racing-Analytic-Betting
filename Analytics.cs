@@ -10,7 +10,8 @@ namespace HorseRacing
 {
   class Analytics
   {
-    public delegate Horse Integrand(Race r);
+    public delegate Horse RetrievePosn(Race r);
+    public delegate byte[] RetrieveHorses(Race r);
 
     static void Main(string[] args)
     {
@@ -32,21 +33,91 @@ namespace HorseRacing
     public static void findBestBet(List<Day> days)
     {
       Console.WriteLine("Horses to win:");
-      retrieveListForPosn(days, getWin);
+      printByteIntDict(retrieveListForPosn(days, getWin));
       Console.WriteLine("\nHorses to place:");
-      retrieveListForPosn(days, getPlace);
+      printByteIntDict(retrieveListForPosn(days, getPlace));
       Console.WriteLine("\nHorses to show:");
-      retrieveListForPosn(days, getShow);
+      printByteIntDict(retrieveListForPosn(days, getShow));
       Console.WriteLine("\nHorses to fourth:");
-      retrieveListForPosn(days, getFourth);
+      printByteIntDict(retrieveListForPosn(days, getFourth));
 
       Console.WriteLine("\nExacta:");
-      bestExacta(days);
+      printByteArrayIntDict(bestExacta(days, exacta));
+
+      Console.WriteLine("\nTrifecta:");
+      printTrifectaDict(bestExacta(days, trifecta));
 
       Console.ReadKey();
     }
 
-    public static void retrieveListForPosn(List<Day> days, Integrand f) {
+    public static void printByteIntDict(Dictionary<byte, int> d)
+    {
+      int total = 0;
+      foreach (KeyValuePair<byte, int> kvp in from entry in d orderby entry.Value descending select entry)
+      {
+        total += kvp.Value;
+      }
+
+      foreach (KeyValuePair<byte, int> kvp in from entry in d orderby entry.Value descending select entry)
+      {
+        double percent = (double)kvp.Value / (double)total;
+        if (percent > .01)
+        {
+          Console.WriteLine("Key = {0}, Value = {1}", kvp.Key, percent);
+        }
+        else
+        {
+          break;
+        }
+      }
+    }
+
+    public static void printByteArrayIntDict(Dictionary<byte[], int> d)
+    {
+      int total = 0;
+      foreach (KeyValuePair<byte[], int> kvp in from entry in d orderby entry.Value descending select entry)
+      {
+        total += kvp.Value;
+      }
+
+      foreach (KeyValuePair<byte[], int> kvp in from entry in d orderby entry.Value descending select entry)
+      {
+        double percent = (double)kvp.Value / (double)total;
+        if (percent > .01)
+        {
+          Console.WriteLine("Key = {0},{1}, Value = {2}", kvp.Key[0], kvp.Key[1], percent);
+        }
+        else
+        {
+          break;
+        }
+      }
+    }
+
+    public static void printTrifectaDict(Dictionary<byte[], int> d)
+    {
+      int total = 0;
+      foreach (KeyValuePair<byte[], int> kvp in from entry in d orderby entry.Value descending select entry)
+      {
+        total += kvp.Value;
+      }
+
+      foreach (KeyValuePair<byte[], int> kvp in from entry in d orderby entry.Value descending select entry)
+      {
+        double percent = (double)kvp.Value / (double)total;
+        if (percent > .01)
+        {
+          Console.WriteLine("Key = {0},{1},{2}, Value = {3}", kvp.Key[0], kvp.Key[1], kvp.Key[2], percent);
+        }
+        else
+        {
+          break;
+        }
+      }
+    }
+
+    public static Dictionary<byte, int> retrieveListForPosn(List<Day> days, RetrievePosn f)
+    {
       Dictionary<byte, int> result = new Dictionary<byte, int>();
       
 
@@ -68,13 +139,10 @@ namespace HorseRacing
         }
       }
 
-      foreach (KeyValuePair<byte, int> kvp in from entry in result orderby entry.Value descending select entry)
-      {
-        Console.WriteLine("Key = {0}, Value = {1}", kvp.Key, kvp.Value);
-      }
+      return result;
     }
 
-    public static void bestExacta(List<Day> days)
+    public static Dictionary<byte[], int> bestExacta(List<Day> days, RetrieveHorses f)
     {
       Dictionary<byte[], int> result = new Dictionary<byte[], int>(new ByteArrayComparer());
       foreach (Day day in days)
@@ -83,7 +151,7 @@ namespace HorseRacing
         {
           foreach (Race race in day.getRaces())
           {
-            byte[] winners = exactaHelper(race);
+            byte[] winners = f(race);
             if (!result.ContainsKey(winners))
             {
               result.Add(winners, 0);
@@ -96,15 +164,17 @@ namespace HorseRacing
         }
       }
 
-      foreach (KeyValuePair<byte[], int> kvp in from entry in result orderby entry.Value descending select entry)
-      {
-        Console.WriteLine("Key = {0},{1}, Value = {2}", kvp.Key[0], kvp.Key[1], kvp.Value); Console.ReadKey();
-      }
+      return result;
     }
 
-    private static byte[] exactaHelper(Race race)
+    private static byte[] exacta(Race r)
     {
-      return new byte[] { getWin(race).getOddRank(), getPlace(race).getOddRank() };
+      return new byte[] { getWin(r).getOddRank(), getPlace(r).getOddRank() };
+    }
+
+    private static byte[] trifecta(Race r)
+    {
+      return new byte[] { getWin(r).getOddRank(), getPlace(r).getOddRank(), getShow(r).getOddRank() };
     }
 
     private static Horse getWin(Race r)
