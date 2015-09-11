@@ -22,29 +22,29 @@ namespace HorseRacing
     public static List<string> pages = new List<string>();
 
     static void Main(string[] args)
-    {/*
-      //SQLiteConnection.CreateFile("Saratoga.sqlite");
+    {
+      SQLiteConnection.CreateFile("Saratoga.sqlite");
       SQLiteConnection m_dbConnection = new SQLiteConnection("Data Source=Saratoga.sqlite;Version=3;");
       m_dbConnection.Open();
 
-      //string sql = "CREATE TABLE saratoga (date TEXT, data TEXT)";
-      //SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
-      //command.ExecuteNonQuery();
+      string sql = "CREATE TABLE saratoga (date TEXT, data TEXT)";
+      SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+      command.ExecuteNonQuery();
 
       DateTime startDate = new DateTime(2000, 7, 25);
-      DateTime endDate = new DateTime(2015, 9, 15);
+      DateTime endDate = new DateTime(2015, 9, 10);
       while (startDate.CompareTo(endDate) != 0)
       {
         Console.WriteLine("Trying: " + startDate.ToShortDateString());
         collectDataforDay(startDate, m_dbConnection);
-        Thread.Sleep(2100);
+        Thread.Sleep(15100);
         startDate = startDate.AddDays(1);
         if (startDate.Month > 8 && startDate.Day > 10)
         {
           startDate = new DateTime(startDate.Year + 1, 7, 25);
         }
       }
-      */
+      
       Console.WriteLine("PROCESS COMPLETE!");
     }
 
@@ -60,19 +60,15 @@ namespace HorseRacing
       PdfReader reader;
       try
       {
-        reader = new PdfReader(@"http://web.archive.org/web/20150827194015/" +
-                                "http://www.equibase.com/premium/eqbPDFChartPlus.cfm?RACE=A&BorP=P&TID=SAR&CTRY=USA&DT=" +
-                                 date + "&DAY=D&STYLE=EQB");
+        reader = new PdfReader("http://www.equibase.com/premium/eqbPDFChartPlus.cfm?RACE=A&BorP=P&TID=SAR&CTRY=USA&DT=" + date + "&DAY=D&STYLE=EQB");
       }
       catch (Exception e)
       {
-        //Gross hack to get around captcha on equibase. This was more useful before I realized all the pdfs were cached..
-        Console.WriteLine("CAPSHA TIME!!");
-        Console.Beep();
+        Console.WriteLine("CAPTCHA TIME");
         Console.ReadKey();
-        reader = new PdfReader(@"http://web.archive.org/web/20150827194015/" +
-                                "http://www.equibase.com/premium/eqbPDFChartPlus.cfm?RACE=A&BorP=P&TID=SAR&CTRY=USA&DT=" +
-                                date + "&DAY=D&STYLE=EQB");
+        Console.ReadKey();
+
+        reader = new PdfReader("http://www.equibase.com/premium/eqbPDFChartPlus.cfm?RACE=A&BorP=P&TID=SAR&CTRY=USA&DT=" + date + "&DAY=D&STYLE=EQB");
       }
       StringBuilder builder = new StringBuilder();
 
@@ -175,8 +171,8 @@ namespace HorseRacing
           {
             break;
           }
-          races.Add(new Race(++b, Race.extractPurse(s), Horse.extractHorses(s),
-                        Race.extractWeather(s), Race.extractTrack(s), Race.extractLength(s)));
+
+          races.Add(new Race(++b, s));
         }
         b = 0;
 

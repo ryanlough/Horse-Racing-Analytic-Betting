@@ -29,22 +29,136 @@ namespace HorseRacing
     private Track track { get; set; }
     [ProtoMember(6)]
     private string length { get; set; }
+    [ProtoMember(7)]
+
+    private double payoffExacta { get; set; }
+    [ProtoMember(8)]
+    private double payoffTrifecta { get; set; }
+    [ProtoMember(9)]
+    private double payoffSuperfecta { get; set; }
+    [ProtoMember(10)]
+    private double payoffDailyDouble { get; set; }
+    [ProtoMember(11)]
+    private double payoffQuinella { get; set; }
+    [ProtoMember(12)]
+    private double payoffPick3 { get; set; }
+    [ProtoMember(13)]
+    private double payoffPick4 { get; set; }
+    [ProtoMember(14)]
+    private double[] payoffWin { get; set; }
+    [ProtoMember(15)]
+    private double[] payoffPlace { get; set; }
+    [ProtoMember(16)]
+    private double payoffShow { get; set; }
 
     //Constructor for Race
-    public Race(byte number, int purse, Horse[] horses, string weather, Track track, string length)
+    public Race(byte number, string s)
     {
       this.number = number;
-      this.purse = purse;
-      this.horses = horses;
-      this.weather = weather;
-      this.track = track;
-      this.length = length;
+      this.purse = extractPurse(s);
+      this.horses = Horse.extractHorses(s);
+      this.weather = extractWeather(s);
+      this.track = extractTrack(s);
+      this.length = extractLength(s);
+
+      double[] payoffs = extractPayoffs(s);
+      this.payoffExacta = payoffs[0];
+      this.payoffTrifecta = payoffs[1];
+      this.payoffSuperfecta = payoffs[2];
+      this.payoffDailyDouble = payoffs[3];
+      this.payoffQuinella = payoffs[4];
+      this.payoffPick3 = payoffs[5];
+      this.payoffPick4 = payoffs[6];
+
+      this.payoffWin = extractWinPayoff(s);
+      this.payoffPlace = extractPlacePayoff(s);
+      this.payoffShow = extractShowPayoff(s);
     }
 
     //Needed to allow protobuf default model binder to desereialize
     public Race()
     {
 
+    }
+
+    /**
+     * Returns an array of all the payoff amounts for the given race.
+     */
+    public static double[] extractPayoffs(string s)
+    {
+      double[] result = new double[10];
+
+      result[0] = extractGivenPayoff(s, @"Exacta");
+      result[1] = extractGivenPayoff(s, @"Trifecta");
+      result[2] = extractGivenPayoff(s, @"Superfecta");
+      result[3] = extractGivenPayoff(s, @"Daily\sDouble");
+      result[4] = extractGivenPayoff(s, @"Quinella");
+      result[5] = extractGivenPayoff(s, @"Pick\s3");
+      result[6] = extractGivenPayoff(s, @"Pick\s4");
+
+      return result;
+    }
+
+    private double[] extractWinPayoff(string s)
+    {
+      string pattern = @"\s(?<win>\d+\.\d+)\s(?<place>\d+\.\d+)\s(?<show>\d+\.\d+)\s";
+      try
+      {
+        Match match = Regex.Match(s.Substring(s.IndexOf("Show " + getWin().getNumber() + " " + getWin().getName())), pattern, RegexOptions.ExplicitCapture);
+        return new double[] { Convert.ToDouble(match.Groups["win"].Value),
+                              Convert.ToDouble(match.Groups["place"].Value),
+                              Convert.ToDouble(match.Groups["show"].Value)};
+      }
+      catch (Exception e)
+      {
+        Console.WriteLine(e.ToString());
+        return null;
+      }
+    }
+
+    private double[] extractPlacePayoff(string s)
+    {
+      string pattern = @"\s(?<place>\d+\.\d+)\s(?<show>\d+\.\d+)\s";
+      try
+      {
+        Match match = Regex.Match(s.Substring(s.IndexOf("Show " + getWin().getNumber() + " " + getWin().getName())), pattern, RegexOptions.ExplicitCapture);
+        return new double[] { Convert.ToDouble(match.Groups["place"].Value),
+                              Convert.ToDouble(match.Groups["show"].Value)};
+      }
+      catch (Exception e)
+      {
+        Console.WriteLine(e.ToString());
+        return null;
+      }
+    }
+
+    private double extractShowPayoff(string s)
+    {
+      string pattern = @"\s(?<show>\d+\.\d+)\s";
+      try
+      {
+        Match match = Regex.Match(s.Substring(s.IndexOf("Show " + getWin().getNumber() + " " + getWin().getName())), pattern, RegexOptions.ExplicitCapture);
+        return Convert.ToDouble(match.Groups["show"].Value);
+      }
+      catch (Exception e)
+      {
+        Console.WriteLine(e.ToString());
+        return -1;
+      }
+    }
+
+    private static double extractGivenPayoff(string s, string type)
+    {
+      string pattern = type + @"\s\d((-|\/)\d)+\s(\(\d\scorrect\)\s)?(?<payoff>(\d+,)?\d+\.\d+)\s";
+      try
+      {
+        return Convert.ToDouble(Regex.Match(s.Substring(s.IndexOf("Payoff")), pattern,
+          RegexOptions.ExplicitCapture).Groups["payoff"].Value);
+      }
+      catch (Exception e)
+      {
+        return -1;
+      }
     }
 
     /**

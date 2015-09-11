@@ -129,6 +129,14 @@ namespace HorseRacing
     }
 
     /**
+     * Returns horse's name.
+     */
+    public string getName()
+    {
+      return name;
+    }
+
+    /**
      * Returns the odds for this horse.
      */
     public double getOdds()
@@ -153,6 +161,14 @@ namespace HorseRacing
     }
 
     /**
+     * Returns horse's number
+     */
+    public byte getNumber()
+    {
+      return number;
+    }
+
+    /**
      * Returns the horses final posn
      */
     public Position getPosition()
@@ -165,7 +181,5 @@ namespace HorseRacing
       return "Number: " + number + " Position: " + position + " Name: " + name +
              " Jockey: " + jockey + " Odds: " + odds + " Trainer: " + trainer + " Owner: " + owner;
     }
-
-
   }
 }
