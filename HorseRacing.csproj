@@ -32,7 +32,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject>HorseRacing.Program</StartupObject>
+    <StartupObject>HorseRacing.Analytics</StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="itextsharp">

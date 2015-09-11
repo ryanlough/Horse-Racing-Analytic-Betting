@@ -23,7 +23,7 @@ namespace HorseRacing
 
       foreach (Day day in days)
       {
-        if (day != null)
+        if (day != null && day.isValid())
           day.setAllHorseRanks();
       }
 

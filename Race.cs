@@ -209,6 +209,8 @@ namespace HorseRacing
      */
     public void setAllOddRanks()
     {
+      if (horses == null)
+        return;
       Horse[] temp = (Horse[])horses.Clone();
       Array.Sort(temp, Comparer<Horse>.Create((x, y) => (x.getOdds()< y.getOdds()) ? -1 : ((x.getOdds() > y.getOdds()) ? 1 : 0)));
       for (byte i = 0; i < temp.Length; i++)
@@ -251,6 +253,7 @@ namespace HorseRacing
 
     private Horse positionHelper(Position pos)
     {
+      if (horses != null)
       foreach (Horse horse in horses)
       {
         if (horse.getPosition() == pos)
@@ -259,6 +262,26 @@ namespace HorseRacing
         }
       }
       return new Horse();
+    }
+
+    /**
+     * Returns true if the race is valid
+     */
+    public bool isValid()
+    {
+      if (horses == null)
+      {
+        return false;
+      }
+
+      foreach (Horse horse in horses)
+      {
+        if (horse == null)
+        {
+          return false;
+        }
+      }
+      return true;
     }
 
     public override string ToString()

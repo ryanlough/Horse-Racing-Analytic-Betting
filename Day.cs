@@ -58,6 +58,26 @@ namespace HorseRacing
       }
     }
 
+    /**
+     * Returns true if no essential info is null.
+     */
+    public bool isValid()
+    {
+      bool result = true;
+
+      if (races == null)
+      {
+        return false;
+      }
+
+      foreach (Race race in races)
+      {
+        result = race != null && race.isValid();
+      }
+
+      return result;
+    }
+
     public override string ToString()
     {
       string result = "";
