@@ -13,6 +13,12 @@ namespace HorseRacing
     public delegate Horse RetrievePosn(Race r);
     public delegate byte[] RetrieveHorses(Race r);
 
+    public struct WinnerData
+    {
+      public int count;
+      public double payoff;
+    }
+
     static void Main(string[] args)
     {
       SQLiteConnection m_dbConnection = new SQLiteConnection("Data Source=Saratoga.sqlite;Version=3;");
@@ -42,10 +48,10 @@ namespace HorseRacing
       printByteIntDict(retrieveListForPosn(days, getFourth));
 
       Console.WriteLine("\nExacta:");
-      printByteArrayIntDict(bestExacta(days, exacta));
+      printByteArrayIntDict(bestSpecialBet(days, exacta));
 
       Console.WriteLine("\nTrifecta:");
-      printTrifectaDict(bestExacta(days, trifecta));
+      //printTrifectaDict(bestSpecialBet(days, trifecta));
 
       Console.ReadKey();
     }
@@ -72,20 +78,20 @@ namespace HorseRacing
       }
     }
 
-    public static void printByteArrayIntDict(Dictionary<byte[], int> d)
+    public static void printByteArrayIntDict(Dictionary<byte[], WinnerData> d)
     {
       int total = 0;
-      foreach (KeyValuePair<byte[], int> kvp in from entry in d orderby entry.Value descending select entry)
+      foreach (KeyValuePair<byte[], WinnerData> kvp in from entry in d orderby entry.Value.count descending select entry)
       {
-        total += kvp.Value;
+        total += kvp.Value.count;
       }
 
-      foreach (KeyValuePair<byte[], int> kvp in from entry in d orderby entry.Value descending select entry)
+      foreach (KeyValuePair<byte[], WinnerData> kvp in from entry in d orderby entry.Value.count descending select entry)
       {
-        double percent = (double)kvp.Value / (double)total;
+        double percent = (double)kvp.Value.count / (double)total;
         if (percent > .01)
         {
-          Console.WriteLine("Key = {0},{1}, Value = {2}", kvp.Key[0], kvp.Key[1], percent);
+          Console.WriteLine("Key = {0},{1}, Value = {2}, $2 Payout = {3}", kvp.Key[0], kvp.Key[1], percent, kvp.Value.payoff);
         }
         else
         {
@@ -142,9 +148,10 @@ namespace HorseRacing
       return result;
     }
 
-    public static Dictionary<byte[], int> bestExacta(List<Day> days, RetrieveHorses f)
+    public static Dictionary<byte[], WinnerData> bestSpecialBet(List<Day> days, RetrieveHorses f)
     {
-      Dictionary<byte[], int> result = new Dictionary<byte[], int>(new ByteArrayComparer());
+      int finalCount = 0;
+      Dictionary<byte[], WinnerData> result = new Dictionary<byte[], WinnerData>(new ByteArrayComparer());
       foreach (Day day in days)
       {
         if (day != null && day.getRaces() != null)
@@ -154,16 +161,21 @@ namespace HorseRacing
             byte[] winners = f(race);
             if (!result.ContainsKey(winners))
             {
-              result.Add(winners, 0);
+              result.Add(winners, new WinnerData() { count = 0,
+                                                     payoff = race.getExactaPayoff() });
             }
             else
             {
-              result[winners] += 1;
+              WinnerData old = result[winners];
+              old.count++;
+              old.payoff += race.getExactaPayoff() - 2;
+              result[winners] = old;
             }
+            finalCount++;
           }
         }
       }
-
+      Console.WriteLine("THIS IS THE NUMBER OF HORSES: " + finalCount);
       return result;
     }
 

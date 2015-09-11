@@ -284,6 +284,14 @@ namespace HorseRacing
       return true;
     }
 
+    /**
+     * Returns exacta payout amount
+     */
+    public double getExactaPayoff()
+    {
+      return payoffExacta;
+    }
+
     public override string ToString()
     {
       string result = "";
