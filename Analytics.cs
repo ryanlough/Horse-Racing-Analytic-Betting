@@ -51,7 +51,7 @@ namespace HorseRacing
       printByteArrayIntDict(bestSpecialBet(days, exacta));
 
       Console.WriteLine("\nTrifecta:");
-      //printTrifectaDict(bestSpecialBet(days, trifecta));
+      printTrifectaDict(bestSpecialBet(days, trifecta));
 
       Console.ReadKey();
     }
@@ -100,20 +100,20 @@ namespace HorseRacing
       }
     }
 
-    public static void printTrifectaDict(Dictionary<byte[], int> d)
+    public static void printTrifectaDict(Dictionary<byte[], WinnerData> d)
     {
       int total = 0;
-      foreach (KeyValuePair<byte[], int> kvp in from entry in d orderby entry.Value descending select entry)
+      foreach (KeyValuePair<byte[], WinnerData> kvp in from entry in d orderby entry.Value.count descending select entry)
       {
-        total += kvp.Value;
+        total += kvp.Value.count;
       }
 
-      foreach (KeyValuePair<byte[], int> kvp in from entry in d orderby entry.Value descending select entry)
+      foreach (KeyValuePair<byte[], WinnerData> kvp in from entry in d orderby entry.Value.count descending select entry)
       {
-        double percent = (double)kvp.Value / (double)total;
+        double percent = (double)kvp.Value.count / (double)total;
         if (percent > .01)
         {
-          Console.WriteLine("Key = {0},{1},{2}, Value = {3}", kvp.Key[0], kvp.Key[1], kvp.Key[2], percent);
+          Console.WriteLine("Key = {0},{1},{2}, Value = {3}, $2 Payout = {4}", kvp.Key[0], kvp.Key[1], kvp.Key[2], percent, kvp.Value.payoff);
         }
         else
         {
@@ -159,19 +159,25 @@ namespace HorseRacing
           foreach (Race race in day.getRaces())
           {
             byte[] winners = f(race);
-            if (!result.ContainsKey(winners))
+            if (race.getExactaPayoff() > 0)
             {
-              result.Add(winners, new WinnerData() { count = 0,
-                                                     payoff = race.getExactaPayoff() });
+              if (!result.ContainsKey(winners))
+              {
+                result.Add(winners, new WinnerData()
+                {
+                  count = 0,
+                  payoff = race.getExactaPayoff()
+                });
+              }
+              else
+              {
+                WinnerData old = result[winners];
+                old.count++;
+                old.payoff += race.getExactaPayoff();
+                result[winners] = old;
+              }
+              finalCount++;
             }
-            else
-            {
-              WinnerData old = result[winners];
-              old.count++;
-              old.payoff += race.getExactaPayoff() - 2;
-              result[winners] = old;
-            }
-            finalCount++;
           }
         }
       }

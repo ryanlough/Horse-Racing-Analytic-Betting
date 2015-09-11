@@ -292,6 +292,14 @@ namespace HorseRacing
       return payoffExacta;
     }
 
+    /**
+     * Returns trifecta payout amount
+     */
+    public double getTrifectaPayoff()
+    {
+      return payoffTrifecta;
+    }
+
     public override string ToString()
     {
       string result = "";
