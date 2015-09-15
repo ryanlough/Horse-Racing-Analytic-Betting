@@ -36,40 +36,48 @@ namespace HorseRacing
       findBestBet(days);
     }
 
+    /**
+     * Prints out a list of the odds for various bets and their respective payouts across ten years of data.
+     * returns void
+     */
     public static void findBestBet(List<Day> days)
     {
       Console.WriteLine("Horses to win:");
-      printByteIntDict(retrieveListForPosn(days, getWin));
+      printSingleHorseDictionary(retrieveListForPosn(days, getWin));
       Console.WriteLine("\nHorses to place:");
-      printByteIntDict(retrieveListForPosn(days, getPlace));
+      printSingleHorseDictionary(retrieveListForPosn(days, getPlace));
       Console.WriteLine("\nHorses to show:");
-      printByteIntDict(retrieveListForPosn(days, getShow));
+      printSingleHorseDictionary(retrieveListForPosn(days, getShow));
       Console.WriteLine("\nHorses to fourth:");
-      printByteIntDict(retrieveListForPosn(days, getFourth));
+      printSingleHorseDictionary(retrieveListForPosn(days, getFourth));
 
       Console.WriteLine("\nExacta:");
-      printByteArrayIntDict(bestSpecialBet(days, exacta));
+      printExactaHorseDictionary(bestSpecialBet(days, exacta));
 
       Console.WriteLine("\nTrifecta:");
-      printTrifectaDict(bestSpecialBet(days, trifecta));
+      printTrifectaHorseDictionary(bestSpecialBet(days, trifecta));
 
       Console.ReadKey();
     }
 
-    public static void printByteIntDict(Dictionary<byte, int> d)
+    /**
+     * Prints out the given dictionary sorted from most likely bet to least likely.
+     * returns void
+     */
+    public static void printSingleHorseDictionary(Dictionary<byte, WinnerData> d)
     {
       int total = 0;
-      foreach (KeyValuePair<byte, int> kvp in from entry in d orderby entry.Value descending select entry)
+      foreach (KeyValuePair<byte, WinnerData> kvp in from entry in d orderby entry.Value.count descending select entry)
       {
-        total += kvp.Value;
+        total += kvp.Value.count;
       }
 
-      foreach (KeyValuePair<byte, int> kvp in from entry in d orderby entry.Value descending select entry)
+      foreach (KeyValuePair<byte, WinnerData> kvp in from entry in d orderby entry.Value.count descending select entry)
       {
-        double percent = (double)kvp.Value / (double)total;
+        double percent = (double)kvp.Value.count / (double)total;
         if (percent > .01)
         {
-          Console.WriteLine("Key = {0}, Value = {1}", kvp.Key, percent);
+          Console.WriteLine("Key = {0}, Value = {1}, $2 Payout = {2}", kvp.Key, percent, kvp.Value.payoff);
         }
         else
         {
@@ -78,7 +86,11 @@ namespace HorseRacing
       }
     }
 
-    public static void printByteArrayIntDict(Dictionary<byte[], WinnerData> d)
+    /**
+     * Prints out the given dictionary sorted from most likely bet to least likely. For exactas.
+     * returns void
+     */
+    public static void printExactaHorseDictionary(Dictionary<byte[], WinnerData> d)
     {
       int total = 0;
       foreach (KeyValuePair<byte[], WinnerData> kvp in from entry in d orderby entry.Value.count descending select entry)
@@ -100,7 +112,11 @@ namespace HorseRacing
       }
     }
 
-    public static void printTrifectaDict(Dictionary<byte[], WinnerData> d)
+    /**
+     * Prints out the given dictionary sorted from most likely bet to least likely. For trifectas.
+     * returns void
+     */
+    public static void printTrifectaHorseDictionary(Dictionary<byte[], WinnerData> d)
     {
       int total = 0;
       foreach (KeyValuePair<byte[], WinnerData> kvp in from entry in d orderby entry.Value.count descending select entry)
@@ -111,7 +127,7 @@ namespace HorseRacing
       foreach (KeyValuePair<byte[], WinnerData> kvp in from entry in d orderby entry.Value.count descending select entry)
       {
         double percent = (double)kvp.Value.count / (double)total;
-        if (percent > .01)
+        if (percent > .001)
         {
           Console.WriteLine("Key = {0},{1},{2}, Value = {3}, $2 Payout = {4}", kvp.Key[0], kvp.Key[1], kvp.Key[2], percent, kvp.Value.payoff);
         }
@@ -122,9 +138,13 @@ namespace HorseRacing
       }
     }
 
-    public static Dictionary<byte, int> retrieveListForPosn(List<Day> days, RetrievePosn f)
+    /**
+     * Returns a dictionary containing the odds that each horse came in for the given Position over the given days.
+     */
+    public static Dictionary<byte, WinnerData> retrieveListForPosn(List<Day> days, RetrievePosn f)
     {
-      Dictionary<byte, int> result = new Dictionary<byte, int>();
+      int finalCount = 0;
+      Dictionary<byte, WinnerData> result = new Dictionary<byte, WinnerData>();
       
 
       foreach (Day day in days)
@@ -132,22 +152,33 @@ namespace HorseRacing
         if (day != null && day.getRaces() != null) {
           foreach (Race race in day.getRaces())
           {
-            byte rank = f(race).getOddRank();
-            if (!result.ContainsKey(rank))
+            if (race.getWinPayoff() > 0)
             {
-              result.Add(rank, 0);
-            }
-            else
-            {
-              result[rank] += 1;
+              byte rank = f(race).getOddRank();
+              if (!result.ContainsKey(rank))
+              {
+                result.Add(rank, new WinnerData() { count = 0, payoff = race.getWinPayoff() });
+              }
+              else
+              {
+                WinnerData old = result[rank];
+                old.count++;
+                old.payoff += race.getWinPayoff();
+                result[rank] = old;
+              }
+              finalCount++;
             }
           }
         }
       }
-
+      Console.WriteLine("Total number of races: " + finalCount);
       return result;
     }
 
+    /**
+     * Retrieves the payout odds for the given type of bet.
+     * return dictionary of the data
+     */
     public static Dictionary<byte[], WinnerData> bestSpecialBet(List<Day> days, RetrieveHorses f)
     {
       int finalCount = 0;
@@ -158,22 +189,22 @@ namespace HorseRacing
         {
           foreach (Race race in day.getRaces())
           {
-            byte[] winners = f(race);
-            if (race.getExactaPayoff() > 0)
+            if (race.getTrifectaPayoff() > 0)
             {
+              byte[] winners = f(race);
               if (!result.ContainsKey(winners))
               {
                 result.Add(winners, new WinnerData()
                 {
                   count = 0,
-                  payoff = race.getExactaPayoff()
+                  payoff = race.getTrifectaPayoff()
                 });
               }
               else
               {
                 WinnerData old = result[winners];
                 old.count++;
-                old.payoff += race.getExactaPayoff();
+                old.payoff += race.getTrifectaPayoff();
                 result[winners] = old;
               }
               finalCount++;
@@ -185,31 +216,49 @@ namespace HorseRacing
       return result;
     }
 
+    /**
+     * Returns a byte array of the rank of the win horse and place horse.
+     */
     private static byte[] exacta(Race r)
     {
       return new byte[] { getWin(r).getOddRank(), getPlace(r).getOddRank() };
     }
 
+    /**
+     * Returns a byte array of the rank of the win horse, place horse, and show horse.
+     */
     private static byte[] trifecta(Race r)
     {
       return new byte[] { getWin(r).getOddRank(), getPlace(r).getOddRank(), getShow(r).getOddRank() };
     }
 
+    /**
+     * Returns the winning horse for the given race.
+     */
     private static Horse getWin(Race r)
     {
       return r.getWin();
     }
 
+    /**
+     * Returns the placing horse for the given race.
+     */
     private static Horse getPlace(Race r)
     {
       return r.getPlace();
     }
 
+    /**
+     * Returns the showing horse for the given race.
+     */
     private static Horse getShow(Race r)
     {
       return r.getShow();
     }
 
+    /**
+     * Returns the fourth placing horse for the given race.
+     */
     private static Horse getFourth(Race r)
     {
       return r.getFourth();

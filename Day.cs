@@ -27,6 +27,11 @@ namespace HorseRacing
 
     }
 
+    public DateTime getDate()
+    {
+      return date;
+    }
+
     /**
      * Returns the SQLite compatible string representation of the DateTime.
      */

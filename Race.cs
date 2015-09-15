@@ -285,6 +285,38 @@ namespace HorseRacing
     }
 
     /**
+     * Returns win payout amount
+     */
+    public double getWinPayoff()
+    {
+      if (payoffWin == null)
+      {
+        return -1;
+      }
+      return payoffWin[0];
+    }
+
+    /**
+     * Returns place payout amount
+     */
+    public double getPlacePayoff()
+    {
+      if (payoffPlace == null)
+      {
+        return -1;
+      }
+      return payoffPlace[0];
+    }
+
+    /**
+     * Returns show payout amount
+     */
+    public double getShowPayoff()
+    {
+      return payoffShow;
+    }
+
+    /**
      * Returns exacta payout amount
      */
     public double getExactaPayoff()

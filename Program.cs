@@ -23,13 +23,13 @@ namespace HorseRacing
 
     static void Main(string[] args)
     {
-      SQLiteConnection.CreateFile("Saratoga.sqlite");
+      //SQLiteConnection.CreateFile("Saratoga.sqlite");
       SQLiteConnection m_dbConnection = new SQLiteConnection("Data Source=Saratoga.sqlite;Version=3;");
       m_dbConnection.Open();
 
-      string sql = "CREATE TABLE saratoga (date TEXT, data TEXT)";
-      SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
-      command.ExecuteNonQuery();
+      //string sql = "CREATE TABLE saratoga (date TEXT, data TEXT)";
+      //SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+      //command.ExecuteNonQuery();
 
       DateTime startDate = new DateTime(2000, 7, 25);
       DateTime endDate = new DateTime(2015, 9, 10);
