@@ -11,11 +11,17 @@ namespace HorseRacing
   class Analytics
   {
     public delegate Horse RetrievePosn(Race r);
-    public delegate byte[] RetrieveHorses(Race r);
+    public delegate RaceData RetrieveHorses(Race r);
 
     public struct WinnerData
     {
       public int count;
+      public double payoff;
+    }
+
+    public struct RaceData
+    {
+      public byte[] winners;
       public double payoff;
     }
 
@@ -77,7 +83,7 @@ namespace HorseRacing
         double percent = (double)kvp.Value.count / (double)total;
         if (percent > .01)
         {
-          Console.WriteLine("Key = {0}, Value = {1}, $2 Payout = {2}", kvp.Key, percent, kvp.Value.payoff);
+          Console.WriteLine("Key = {0}, Value = {1}", kvp.Key, percent);
         }
         else
         {
@@ -189,23 +195,23 @@ namespace HorseRacing
         {
           foreach (Race race in day.getRaces())
           {
-            if (race.getTrifectaPayoff() > 0)
+            RaceData rd = f(race);
+            if (rd.payoff > 0)
             {
-              byte[] winners = f(race);
-              if (!result.ContainsKey(winners))
+              if (!result.ContainsKey(rd.winners))
               {
-                result.Add(winners, new WinnerData()
+                result.Add(rd.winners, new WinnerData()
                 {
                   count = 0,
-                  payoff = race.getTrifectaPayoff()
+                  payoff = rd.payoff
                 });
               }
               else
               {
-                WinnerData old = result[winners];
+                WinnerData old = result[rd.winners];
                 old.count++;
-                old.payoff += race.getTrifectaPayoff();
-                result[winners] = old;
+                old.payoff += rd.payoff;
+                result[rd.winners] = old;
               }
               finalCount++;
             }
@@ -219,17 +225,19 @@ namespace HorseRacing
     /**
      * Returns a byte array of the rank of the win horse and place horse.
      */
-    private static byte[] exacta(Race r)
+    private static RaceData exacta(Race r)
     {
-      return new byte[] { getWin(r).getOddRank(), getPlace(r).getOddRank() };
+      return new RaceData() { winners = new byte[] { getWin(r).getOddRank(), getPlace(r).getOddRank() },
+                              payoff = r.getExactaPayoff() };
     }
 
     /**
      * Returns a byte array of the rank of the win horse, place horse, and show horse.
      */
-    private static byte[] trifecta(Race r)
+    private static RaceData trifecta(Race r)
     {
-      return new byte[] { getWin(r).getOddRank(), getPlace(r).getOddRank(), getShow(r).getOddRank() };
+      return new RaceData() { winners = new byte[] { getWin(r).getOddRank(), getPlace(r).getOddRank(),
+                              getShow(r).getOddRank() }, payoff = r.getTrifectaPayoff() };
     }
 
     /**
