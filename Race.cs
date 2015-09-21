@@ -251,6 +251,14 @@ namespace HorseRacing
       return positionHelper(Position.Fourth);
     }
 
+    /**
+     * Returns the weather
+     */
+    public string getWeather()
+    {
+      return weather;
+    }
+
     private Horse positionHelper(Position pos)
     {
       if (horses != null)
@@ -330,6 +338,14 @@ namespace HorseRacing
     public double getTrifectaPayoff()
     {
       return payoffTrifecta;
+    }
+
+    /**
+     * Returns superfecta payout amount
+     */
+    public double getSuperfectaPayoff()
+    {
+      return payoffSuperfecta;
     }
 
     public override string ToString()

@@ -10,6 +10,9 @@ namespace HorseRacing
 {
   class Analytics
   {
+    public static DateTime startDate = new DateTime(2000, 7, 24);
+    public static DateTime endDate = new DateTime(2016, 7, 24);
+
     public delegate Horse RetrievePosn(Race r);
     public delegate RaceData RetrieveHorses(Race r);
 
@@ -63,6 +66,9 @@ namespace HorseRacing
       Console.WriteLine("\nTrifecta:");
       printTrifectaHorseDictionary(bestSpecialBet(days, trifecta));
 
+      Console.WriteLine("\nSuperfecta:");
+      printSuperfectaHorseDictionary(bestSpecialBet(days, superfecta));
+
       Console.ReadKey();
     }
 
@@ -107,7 +113,7 @@ namespace HorseRacing
       foreach (KeyValuePair<byte[], WinnerData> kvp in from entry in d orderby entry.Value.count descending select entry)
       {
         double percent = (double)kvp.Value.count / (double)total;
-        if (percent > .01)
+        if (percent > .001)
         {
           Console.WriteLine("Key = {0},{1}, Value = {2}, $2 Payout = {3}", kvp.Key[0], kvp.Key[1], percent, kvp.Value.payoff);
         }
@@ -145,6 +151,32 @@ namespace HorseRacing
     }
 
     /**
+     * Prints out the given dictionary sorted from most likely bet to least likely. For trifectas.
+     * returns void
+     */
+    public static void printSuperfectaHorseDictionary(Dictionary<byte[], WinnerData> d)
+    {
+      int total = 0;
+      foreach (KeyValuePair<byte[], WinnerData> kvp in from entry in d orderby entry.Value.count descending select entry)
+      {
+        total += kvp.Value.count;
+      }
+
+      foreach (KeyValuePair<byte[], WinnerData> kvp in from entry in d orderby entry.Value.count descending select entry)
+      {
+        double percent = (double)kvp.Value.count / (double)total;
+        if (percent > .007)
+        {
+          Console.WriteLine("Key = {0},{1},{2},{3} Value = {4}, $2 Payout = {5}", kvp.Key[0], kvp.Key[1], kvp.Key[2], kvp.Key[3], percent, kvp.Value.payoff);
+        }
+        else
+        {
+          break;
+        }
+      }
+    }
+
+    /**
      * Returns a dictionary containing the odds that each horse came in for the given Position over the given days.
      */
     public static Dictionary<byte, WinnerData> retrieveListForPosn(List<Day> days, RetrievePosn f)
@@ -155,7 +187,7 @@ namespace HorseRacing
 
       foreach (Day day in days)
       {
-        if (day != null && day.getRaces() != null) {
+        if (isValidDay(day)) {
           foreach (Race race in day.getRaces())
           {
             if (race.getWinPayoff() > 0)
@@ -191,34 +223,37 @@ namespace HorseRacing
       Dictionary<byte[], WinnerData> result = new Dictionary<byte[], WinnerData>(new ByteArrayComparer());
       foreach (Day day in days)
       {
-        if (day != null && day.getRaces() != null)
+        if (isValidDay(day))
         {
           foreach (Race race in day.getRaces())
           {
-            RaceData rd = f(race);
-            if (rd.payoff > 0)
+            if (true)//race.getWeather() != "Clear")
             {
-              if (!result.ContainsKey(rd.winners))
+              RaceData rd = f(race);
+              if (rd.payoff > 0)
               {
-                result.Add(rd.winners, new WinnerData()
+                if (!result.ContainsKey(rd.winners))
                 {
-                  count = 0,
-                  payoff = rd.payoff
-                });
+                  result.Add(rd.winners, new WinnerData()
+                  {
+                    count = 0,
+                    payoff = rd.payoff
+                  });
+                }
+                else
+                {
+                  WinnerData old = result[rd.winners];
+                  old.count++;
+                  old.payoff += rd.payoff;
+                  result[rd.winners] = old;
+                }
+                finalCount++;
               }
-              else
-              {
-                WinnerData old = result[rd.winners];
-                old.count++;
-                old.payoff += rd.payoff;
-                result[rd.winners] = old;
-              }
-              finalCount++;
             }
           }
         }
       }
-      Console.WriteLine("THIS IS THE NUMBER OF HORSES: " + finalCount);
+      Console.WriteLine("THIS IS THE NUMBER OF RACES: " + finalCount);
       return result;
     }
 
@@ -238,6 +273,19 @@ namespace HorseRacing
     {
       return new RaceData() { winners = new byte[] { getWin(r).getOddRank(), getPlace(r).getOddRank(),
                               getShow(r).getOddRank() }, payoff = r.getTrifectaPayoff() };
+    }
+
+    /**
+     * Returns a byte array of the rank of the win horse, place horse, and show horse.
+     */
+    private static RaceData superfecta(Race r)
+    {
+      return new RaceData()
+      {
+        winners = new byte[] { getWin(r).getOddRank(), getPlace(r).getOddRank(),
+                              getShow(r).getOddRank(), getFourth(r).getOddRank() },
+        payoff = r.getSuperfectaPayoff()
+      };
     }
 
     /**
@@ -270,6 +318,13 @@ namespace HorseRacing
     private static Horse getFourth(Race r)
     {
       return r.getFourth();
+    }
+
+    //Checks if the given day should be accounted for in the bet
+    private static bool isValidDay(Day d)
+    {
+      DateTime date = d.getDate();
+      return d != null && d.getRaces() != null && date > startDate && date < endDate;
     }
 
     private class ByteArrayComparer : IEqualityComparer<byte[]>
